@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mais Swag | Todas as peças</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,600;0,800;1,800;1,900&display=swap">
+<style>
+:root{--ink:#0d0d0d;--paper:#f3f2ee;--red:#e5231b;--yellow:#ffd400;--line:#0d0d0d;}
+*{box-sizing:border-box;margin:0}
+body{font-family:Archivo,Arial,sans-serif;background:var(--paper);color:var(--ink);line-height:1.4}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 5vw;border-bottom:3px solid var(--ink);position:sticky;top:0;background:var(--paper);z-index:5}
+.logo{background:var(--red);color:#fff;font-weight:900;font-style:italic;font-size:22px;padding:2px 12px;letter-spacing:-.5px}
+.bag{font-weight:800;border:3px solid var(--ink);background:var(--yellow);padding:6px 14px;cursor:pointer;font-family:inherit;font-size:15px}
+.bag:focus-visible,.f:focus-visible,.add:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.hero{padding:6vw 5vw 3vw}
+.hero h1{font-weight:900;font-style:italic;font-size:clamp(44px,12vw,150px);line-height:.88;letter-spacing:-.04em;text-transform:uppercase}
+.hero h1 span{background:var(--red);color:#fff;padding:0 .12em;display:inline-block;transform:rotate(-2deg)}
+.hero p{max-width:46ch;margin-top:20px;font-size:18px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:10px 5vw 24px}
+.f{font-family:inherit;font-weight:800;font-size:15px;padding:8px 16px;border:3px solid var(--ink);background:transparent;cursor:pointer}
+.f[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;padding:0 5vw 6vw}
+.card{border:3px solid var(--ink);background:#fff;display:flex;flex-direction:column}
+.pic{aspect-ratio:1/1;display:grid;place-items:center;position:relative;border-bottom:3px solid var(--ink);overflow:hidden}
+.pic img{width:100%;height:100%;object-fit:cover}
+.pic svg{width:58%;fill:rgba(0,0,0,.88)}
+.tag{position:absolute;top:10px;left:10px;background:var(--red);color:#fff;font-weight:800;font-size:12px;padding:3px 8px}
+.info{padding:14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.cat{font-size:13px;color:#555}
+.name{font-weight:800;font-size:18px}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:12px}
+.price{font-weight:900;font-size:20px}
+.add{font-family:inherit;font-weight:800;border:3px solid var(--ink);background:var(--yellow);padding:6px 12px;cursor:pointer}
+.add:hover{background:var(--ink);color:var(--yellow)}
+.empty{padding:0 5vw 6vw;font-size:18px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">+ SWAG</div>
+  <button class="bag" id="bag" type="button">Sacola (0)</button>
+</header>
+
+<section class="hero">
+  <h1>Mais <span>peças</span></h1>
+  <p>Camisetas, moletons, calças, bonés e acessórios. Escolha uma categoria e monte seu look.</p>
+</section>
+
+<div class="filters" id="filters" role="group" aria-label="Filtrar por categoria"></div>
+<main class="grid" id="grid"></main>
+
+<script>
+/* ===== EDITE AQUI: adicione, remova ou altere suas peças =====
+   img: coloque o endereço da foto (ex.: "fotos/camiseta1.jpg"). Se deixar vazio, aparece um bloco de cor.
+   tag: texto opcional no canto da foto (ex.: "Novo", "Últimas"). */
+const PRODUTOS = [
+  {nome:"Camiseta Oversized + Swag", cat:"Camisetas", preco:119.9, cor:"#e5231b", tag:"Novo", img:""},
+  {nome:"Camiseta Logo Caixa",       cat:"Camisetas", preco:99.9,  cor:"#ffd400", tag:"",     img:""},
+  {nome:"Moletom Canguru Swag",      cat:"Moletons",  preco:229.9, cor:"#d9d6cc", tag:"Novo", img:""},
+  {nome:"Jaqueta Corta-Vento",       cat:"Moletons",  preco:279.9, cor:"#0d0d0d", tag:"",     img:""},
+  {nome:"Calça Cargo Street",        cat:"Calças",    preco:199.9, cor:"#8a8f7a", tag:"",     img:""},
+  {nome:"Bermuda Tactel",            cat:"Calças",    preco:129.9, cor:"#e5231b", tag:"Últimas", img:""},
+  {nome:"Boné Dad Hat +",            cat:"Bonés",     preco:89.9,  cor:"#ffd400", tag:"",     img:""},
+  {nome:"Bucket Hat Swag",           cat:"Bonés",     preco:94.9,  cor:"#d9d6cc", tag:"",     img:""},
+  {nome:"Shoulder Bag",              cat:"Acessórios",preco:109.9, cor:"#0d0d0d", tag:"Novo", img:""},
+  {nome:"Kit Adesivos +",            cat:"Acessórios",preco:24.9,  cor:"#e5231b", tag:"",     img:""}
+];
+
+const CATS = ["Todas", ...new Set(PRODUTOS.map(p => p.cat))];
+const BRL = n => n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const ICONE = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M33 12 12 24l8 18 10-5v51h40V37l10 5 8-18L67 12c-3 7-9 11-17 11s-14-4-17-11z"/></svg>';
+let atual = "Todas", sacola = 0;
+
+const filtros = document.getElementById("filters");
+const grade = document.getElementById("grid");
+const btnSacola = document.getElementById("bag");
+
+function desenharFiltros(){
+  filtros.innerHTML = "";
+  CATS.forEach(c => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "f"; b.textContent = c;
+    b.setAttribute("aria-pressed", c === atual);
+    b.onclick = () => { atual = c; desenharFiltros(); desenharGrade(); };
+    filtros.appendChild(b);
+  });
+}
+
+function desenharGrade(){
+  const lista = PRODUTOS.filter(p => atual === "Todas" || p.cat === atual);
+  if(!lista.length){ grade.innerHTML = '<p class="empty">Nenhuma peça nesta categoria ainda.</p>'; return; }
+  grade.innerHTML = "";
+  lista.forEach(p => {
+    const el = document.createElement("article");
+    el.className = "card";
+    el.innerHTML =
+      '<div class="pic" style="background:'+p.cor+'">' +
+        (p.img ? '<img src="'+p.img+'" alt="'+p.nome+'">' : ICONE) +
+        (p.tag ? '<span class="tag">'+p.tag+'</span>' : '') +
+      '</div>' +
+      '<div class="info"><span class="cat">'+p.cat+'</span><h2 class="name">'+p.nome+'</h2>' +
+      '<div class="row"><span class="price">'+BRL(p.preco)+'</span>' +
+      '<button class="add" type="button">Adicionar</button></div></div>';
+    el.querySelector(".add").onclick = () => { sacola++; btnSacola.textContent = "Sacola ("+sacola+")"; };
+    grade.appendChild(el);
+  });
+}
+
+desenharFiltros();
+desenharGrade();
+</script>
+</body>
+</html>

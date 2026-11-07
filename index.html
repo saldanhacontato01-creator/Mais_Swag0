@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minha Loja</title>
+
+<!--
+  ================================================================
+  COMO EDITAR ESTE SITE (leia primeiro!)
+  ================================================================
+  O arquivo tem 3 partes:
+    1) CSS   -> as cores e o visual (logo abaixo)
+    2) HTML  -> a estrutura da página (textos fixos)
+    3) JS    -> os produtos e o carrinho (no final)
+
+  O QUE VOCÊ VAI MUDAR MAIS:
+    - Nome da loja, WhatsApp, Instagram -> procure por "CONFIGURAÇÕES" no JS
+    - Produtos (nome, preço, tamanhos)  -> procure por "PRODUTOS" no JS
+    - Cores do site                     -> procure por ":root" no CSS
+  ================================================================
+-->
+
+<style>
+  /* ---------- CORES: mude aqui e o site inteiro muda ---------- */
+  :root {
+    --fundo: #76c4f87a;      /* cor de fundo da página */
+    --texto: #1c2a25;      /* cor das letras */
+    --destaque: #2d4fd6;   /* cor dos botões */
+    --suave: #dfe4dc;      /* bordas e áreas claras */
+    --branco: #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Bricolage Grotesque", "Segoe UI", Arial, sans-serif;
+    background: var(--fundo);
+    color: var(--texto);
+    line-height: 1.5;
+  }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; }
+
+  /* ---------- TOPO ---------- */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 5vw;
+    background: var(--fundo);
+    border-bottom: 1px solid var(--suave);
+  }
+  .logo { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+  .btn-carrinho {
+    background: var(--texto); color: var(--branco);
+    border: 0; border-radius: 999px; padding: 9px 18px; font-weight: 600;
+  }
+
+  /* ---------- BANNER ---------- */
+  .banner { padding: 9vh 5vw 6vh; max-width: 900px; }
+  .banner h1 {
+    font-size: clamp(2.4rem, 8vw, 5rem);
+    line-height: 1; letter-spacing: -2px; font-weight: 800;
+  }
+  .banner p { margin: 18px 0 26px; font-size: 1.1rem; max-width: 460px; }
+  .btn {
+    display: inline-block; background: var(--destaque); color: var(--branco);
+    border: 0; border-radius: 8px; padding: 12px 24px;
+    font-weight: 600; text-decoration: none;
+  }
+
+  /* ---------- FILTROS ---------- */
+  .filtros { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 5vw 20px; }
+  .filtros button {
+    background: transparent; border: 1.5px solid var(--texto);
+    border-radius: 999px; padding: 6px 16px;
+  }
+  .filtros button.ativo { background: var(--texto); color: var(--branco); }
+
+  /* ---------- LISTA DE PRODUTOS ---------- */
+  .produtos {
+    display: grid; gap: 22px; padding: 0 5vw 60px;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+  .produto { display: flex; flex-direction: column; }
+  .foto {
+    aspect-ratio: 4 / 5; border-radius: 10px; overflow: hidden;
+    display: flex; align-items: flex-end; padding: 12px;
+    font-weight: 800; font-size: 1.6rem; letter-spacing: -1px;
+    background-size: cover; background-position: center;
+  }
+  .produto h3 { margin-top: 10px; font-size: 1.05rem; }
+  .preco { font-weight: 700; margin-bottom: 8px; }
+  .tamanhos { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tamanhos button {
+    min-width: 38px; padding: 5px 8px; background: var(--branco);
+    border: 1.5px solid var(--suave); border-radius: 6px;
+  }
+  .tamanhos button.ativo { border-color: var(--texto); background: var(--texto); color: var(--branco); }
+  .produto .btn { width: 100%; text-align: center; margin-top: auto; }
+
+  .antigo { font-weight: 400; opacity: .6; margin-right: 4px; }
+  .ver-mais-area { text-align: center; padding: 0 5vw 50px; }
+
+  /* ---------- CARRINHO (painel lateral) ---------- */
+  .fundo-escuro {
+    position: fixed; inset: 0; background: rgba(0,0,0,.4);
+    display: none; z-index: 20;
+  }
+  .fundo-escuro.aberto { display: block; }
+  .carrinho {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 30;
+    width: min(400px, 100%); background: var(--branco);
+    transform: translateX(100%); transition: transform .25s;
+    display: flex; flex-direction: column; padding: 20px;
+  }
+  .carrinho.aberto { transform: none; }
+  .carrinho-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .carrinho-topo button { background: none; border: 0; font-size: 1.6rem; }
+  #itens { flex: 1; overflow-y: auto; }
+  .item { display: flex; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--suave); }
+  .item small { display: block; opacity: .7; }
+  .qtd { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .qtd button { width: 28px; height: 28px; border: 1.5px solid var(--suave); background: var(--branco); border-radius: 6px; }
+  .vazio { opacity: .7; padding: 20px 0; }
+  .total { display: flex; justify-content: space-between; font-weight: 800; font-size: 1.2rem; padding: 16px 0; }
+  .carrinho .btn { text-align: center; width: 100%; }
+
+
+  /* ---------- SEÇÕES EXTRAS (categorias, galeria, sobre) ---------- */
+  .secao { padding: 60px 5vw 20px; }
+  .secao h2 { font-size: clamp(1.7rem, 5vw, 2.6rem); letter-spacing: -1px; line-height: 1.1; margin-bottom: 8px; }
+  .secao .sub { margin-bottom: 24px; max-width: 520px; opacity: .8; }
+
+  /* Faixa de benefícios */
+  .beneficios { display: grid; gap: 14px; padding: 0 5vw 20px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .beneficio { background: var(--branco); border: 1px solid var(--suave); border-radius: 10px; padding: 16px; }
+  .beneficio strong { display: block; }
+  .beneficio span { font-size: .92rem; opacity: .8; }
+
+  /* Categorias com foto grande */
+  .cats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .cat {
+    position: relative; aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden;
+    border: 0; text-align: left; color: var(--branco);
+    background-size: cover; background-position: center;
+    display: flex; align-items: flex-end; padding: 16px;
+  }
+  .cat::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 50%, rgba(0,0,0,.6)); }
+  .cat span { position: relative; z-index: 1; font-size: 1.5rem; font-weight: 800; letter-spacing: -.5px; }
+
+  /* Galeria (Lookbook): fotos de tamanhos variados */
+  .galeria { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); grid-auto-rows: 180px; grid-auto-flow: dense; }
+  .galeria button {
+    border: 0; border-radius: 10px; overflow: hidden; position: relative;
+    background-size: cover; background-position: center; color: var(--branco);
+    display: flex; align-items: flex-end; padding: 10px; text-align: left; font-weight: 600;
+  }
+  .galeria button::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 60%, rgba(0,0,0,.55)); }
+  .galeria button span { position: relative; z-index: 1; }
+  .galeria .alta  { grid-row: span 2; }
+  .galeria .larga { grid-column: span 2; }
+
+  /* Foto ampliada */
+  .zoom { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; padding: 20px; }
+  .zoom.aberto { display: flex; }
+  .zoom img { max-width: 100%; max-height: 85vh; border-radius: 10px; }
+  .zoom p { color: var(--branco); text-align: center; margin-top: 10px; }
+
+  /* Sobre */
+  .sobre { display: grid; gap: 30px; align-items: center; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .sobre .foto { aspect-ratio: 1; }
+  .sobre p { margin-bottom: 14px; max-width: 480px; }
+
+  /* ---------- RODAPÉ ---------- */
+  footer { padding: 40px 5vw; background: var(--texto); color: var(--branco); }
+  footer a { color: var(--branco); }
+  footer p { margin-top: 6px; }
+</style>
+</head>
+
+<body>
+
+<!-- ---------- TOPO ---------- -->
+<header>
+  <div class="logo" id="nome-loja"></div>
+  <button class="btn-carrinho" id="abrir-carrinho">Sacola (<span id="contador">0</span>)</button>
+</header>
+
+<!-- ---------- BANNER (texto principal) ---------- -->
+<section class="banner">
+  <h1 id="titulo-banner"></h1>
+  <p id="texto-banner"></p>
+  <a class="btn" href="#produtos">Ver peças</a>
+</section>
+
+<!-- ---------- PRODUTOS ---------- -->
+<div class="filtros" id="filtros"></div>
+<main class="produtos" id="produtos"></main>
+<div class="ver-mais-area"><button class="btn" id="ver-mais">Ver mais peças</button></div>
+
+<!-- ---------- CARRINHO ---------- -->
+<div class="fundo-escuro" id="fundo"></div>
+<aside class="carrinho" id="carrinho" aria-label="Sacola de compras">
+  <div class="carrinho-topo">
+    <h2>Sua sacola</h2>
+    <button id="fechar-carrinho" aria-label="Fechar sacola">×</button>
+  </div>
+  <div id="itens"></div>
+  <div class="total"><span>Total</span><span id="total">R$ 0,00</span></div>
+  <button class="btn" id="finalizar">Finalizar pelo WhatsApp</button>
+</aside>
+
+<!-- ---------- BENEFÍCIOS ---------- -->
+<section class="beneficios" id="beneficios"></section>
+
+<!-- ---------- CATEGORIAS ---------- -->
+<section class="secao">
+  <h2>Compre por categoria</h2>
+  <p class="sub">Toque em uma categoria para ver só as peças dela.</p>
+  <div class="cats" id="cats"></div>
+</section>
+
+<!-- ---------- GALERIA / LOOKBOOK ---------- -->
+<section class="secao" id="galeria-secao">
+  <h2>Lookbook</h2>
+  <p class="sub">Inspire-se com combinações que usamos por aqui. Toque na foto para ampliar.</p>
+  <div class="galeria" id="galeria"></div>
+</section>
+
+<!-- ---------- SOBRE A LOJA ---------- -->
+<section class="secao">
+  <div class="sobre">
+    <div class="foto" id="sobre-foto"></div>
+    <div>
+      <h2 id="sobre-titulo"></h2>
+      <p id="sobre-texto"></p>
+      <a class="btn" id="sobre-botao" target="_blank" rel="noopener">Falar com a gente</a>
+    </div>
+  </div>
+</section>
+
+<!-- Foto ampliada -->
+<div class="zoom" id="zoom"><div><img id="zoom-img" alt=""><p id="zoom-legenda"></p></div></div>
+
+<!-- ---------- RODAPÉ ---------- -->
+<footer>
+  <strong id="rodape-nome"></strong>
+  <p id="rodape-endereco"></p>
+  <p>WhatsApp: <a id="rodape-zap" href="#"></a> · Instagram: <a id="rodape-insta" href="#"></a></p>
+</footer>
+
+
+<script>
+/* =================================================================
+   CONFIGURAÇÕES  -> dados da sua loja. Troque os textos entre aspas.
+   ================================================================= */
+const LOJA = {
+  nome: "Mais Swag",
+  tituloBanner: "Seja sua própria referência.",
+  textoBanner: "Peças confortáveis, feitas para durar. Escolha, monte sua sacola e finalize pelo WhatsApp.",
+  whatsapp: "5511975919276",        // só números: 55 + DDD + número
+  instagram: "mais_swag",           // sem o @
+  endereco: "Barueri/SP"
+};
+
+/* =================================================================
+   PRODUTOS  -> cada produto fica entre { } e termina com vírgula.
+   Para ADICIONAR: copie um bloco inteiro e cole abaixo do último.
+   Para REMOVER:   apague o bloco inteiro.
+
+   id         -> número único (não repita)
+   nome       -> nome que aparece no site
+   preco      -> preço, com ponto (89.90) e sem "R$"
+   categoria  -> usada nos botões de filtro (escreva igual nos que forem do mesmo tipo)
+   tamanhos   -> lista de tamanhos disponíveis
+   cor        -> cor de fundo, enquanto você não tem foto
+   imagem     -> (opcional) caminho da foto, ex: "fotos/camiseta.jpg"
+   precoAntigo-> (opcional) preço "de". Se preencher, aparece riscado (promoção).
+                 Para não usar, apague o campo ou deixe 0.
+   ================================================================= */
+const PRODUTOS = [
+  { id: 1, nome: "Blusa de moletom",  preco: 139.90,  categoria: "Blusa de moletom", tamanhos: ["P","M","G","GG"], cor: "#c9d6ff", imagem: "https://i.pinimg.com/736x/9c/57/19/9c571966e940257cde5d4ddc010538ce.jpg" },
+  { id: 2, nome: "Blusa de moletom", preco: 139.90, categoria: "Blusa de moletom", tamanhos: ["P","M","G"],    cor: "#ffd9c2", imagem: "https://i.pinimg.com/736x/0b/ee/40/0bee404089cc8c967946cf02b2889c16.jpg" },
+  { id: 3, nome: "Camiseta Básica",      preco: 69.90, categoria: "Camiseta Básica",    tamanhos: ["38","40","42","44"], cor: "#9db4d6", imagem: "https://i.pinimg.com/736x/5a/8a/81/5a8a81e7c391d9d3482e3a13f19544ad.jpg" },
+  { id: 4, nome: "Camiseta Básica", preco: 69.90, categoria: "Camiseta Básica",   tamanhos: ["38","40","42"], cor: "#d8d2c4", imagem: "https://i.pinimg.com/736x/ff/9c/52/ff9c52dc8efd828e29e33f328a111f2d.jpg" },
+  { id: 5, nome: "Camiseta estampada",     preco: 79.90, categoria: "Camiseta estampada",  tamanhos: ["P","M","G"],    cor: "#f4c7d4", imagem: "https://i.pinimg.com/736x/e6/0c/1c/e60c1ca4e75b30b09f7b3d8c3636c525.jpg" },
+  { id: 6, nome: "Camiseta estampada",     preco: 79.90, categoria: "Camiseta estampada",   tamanhos: ["M","G","GG"],   cor: "#b9d8c2", imagem: "https://i.pinimg.com/736x/82/46/65/8246651b4287976e35199a70494a9a6a.jpg" },
+  { id: 7, nome: "Camiseta estampada", preco: 79.90, precoAntigo: 0, categoria: "Camiseta estampada", tamanhos: ["P","M","G"], cor: "#e3d5ff", imagem: "https://i.pinimg.com/736x/0b/0a/b3/0b0ab335f0b6a7ed310e7b2c1115f636.jpg" },
+  { id: 8, nome: "Camiseta estampada", preco: 79.90, precoAntigo: 49.9, categoria: "Camiseta estampada", tamanhos: ["P","M","G"], cor: "#ffe7a8", imagem: "https://i.pinimg.com/736x/0c/a0/71/0ca0715fb4908a33c6082610c100c0b8.jpg" },
+  { id: 9, nome: "Camiseta estampada", preco: 79.90, precoAntigo: 0, categoria: "Camiseta estampada", tamanhos: ["38","40","42","44"], cor: "#c7c9b0", imagem: "https://i.pinimg.com/736x/e5/aa/a2/e5aaa247ae606bfde0275366d32b3155.jpg" },
+  { id: 10, nome: "Camiseta estampada", preco: 79.9, precoAntigo: 119.9, categoria: "", tamanhos: ["36","38","40","42"], cor: "#a9c4e8", imagem: "https://i.pinimg.com/736x/84/ba/27/84ba27ac325ab008a2bdfa246df8c5f4.jpg" },
+  { id: 11, nome: "Camiseta estampada", preco: 79.9, precoAntigo: 0, categoria: "Camiseta estampada", tamanhos: ["36","38","40"], cor: "#e8d9c5", imagem: "https://i.pinimg.com/736x/82/b5/a4/82b5a4121ea9f243c1aa4e4c3a1b8de1.jpg" },
+  { id: 12, nome: "Camiseta estampada", preco: 79.9, precoAntigo: 0, categoria: "Camiseta estampada", tamanhos: ["P","M","G"], cor: "#f0b8c8", imagem: "https://i.pinimg.com/736x/ef/1d/52/ef1d521374867a9ea6f8327d5faa1948.jpg" },
+  { id: 13, nome: "Camiseta estampada", preco: 79.9, precoAntigo: 189.9, categoria:"Camiseta estampada", tamanhos: ["P","M","G"], cor: "#ffc9b0", imagem: "https://assets.sistemawbuy.com.br/arquivos/0fc37c4645f2cb83b4ebdb843e183399/produtos/6a2b00bfda401/453a9c20077dbb77c9a19ed01bc2d6cc-6a2b00d479518.jpg" },
+  { id: 14, nome: "Camiseta estampada", preco: 79.9, precoAntigo: 0, categoria: "Camiseta estampada", tamanhos: ["M","G","GG"], cor: "#b8c4d0", imagem: "" },
+  { id: 15, nome: "Camiseta estampada", preco: 79.9, precoAntigo: 0, categoria: "Camiseta estampada", tamanhos: ["P","M","G"], cor: "#cfcfcf", imagem: "https://i.pinimg.com/736x/d6/c8/b8/d6c8b82c60b186b72ab72b36930e8714.jpg" },
+  { id: 16, nome: "Camiseta estampada", preco: 79.9, precoAntigo: 159.9, categoria: "Camiseta estampada", tamanhos: ["P","M","G"], cor: "#d9c7b0", imagem: "https://i.pinimg.com/736x/83/de/d4/83ded49b30691c61cb62c65b718aae15.jpg" }
+];
+
+
+/* =================================================================
+   BENEFÍCIOS -> faixa de avisos abaixo dos produtos. Edite os textos.
+   ================================================================= */
+const BENEFICIOS = [
+  { titulo: "Entrega para todo o Brasil", texto: "Enviamos pelos Correios." },
+  { titulo: "Troca fácil",               texto: "Até 7 dias após o recebimento." },
+  { titulo: "Pix com desconto",          texto: "Pergunte no WhatsApp." },
+  { titulo: "Atendimento rápido",        texto: "Respondemos pelo WhatsApp." }
+];
+
+/* =================================================================
+   GALERIA (LOOKBOOK) -> suas fotos de roupas. Para ADICIONAR mais,
+   copie uma linha e cole abaixo. Cada linha é uma foto.
+   imagem  -> link ou caminho ("fotos/look1.jpg"). Se deixar vazio, aparece uma cor.
+   legenda -> texto pequeno em cima da foto
+   formato -> "" (quadrada), "alta" (ocupa 2 linhas) ou "larga" (ocupa 2 colunas)
+   ================================================================= */
+const FOTO_EXEMPLO = "https://i.pinimg.com/736x/ce/d3/37/ced337f50b753b70aa1bdf7e7153f78f.jpg";
+const FOTO_EXEMPLO1 = "https://i.pinimg.com/736x/b7/cc/d1/b7ccd15d0aac57f7a1dc931392e68606.jpg";
+const FOTO_EXEMPLO2 = "https://i.pinimg.com/736x/ef/1d/52/ef1d521374867a9ea6f8327d5faa1948.jpg";
+const FOTO_EXEMPLO3 = "https://i.pinimg.com/736x/0b/ee/40/0bee404089cc8c967946cf02b2889c16.jpg";
+const FOTO_EXEMPLO4 = "https://i.pinimg.com/736x/5a/8a/81/5a8a81e7c391d9d3482e3a13f19544ad.jpg";
+const FOTO_EXEMPLO5 = "https://i.pinimg.com/736x/e6/0c/1c/e60c1ca4e75b30b09f7b3d8c3636c525.jpg";
+const FOTO_EXEMPLO6 = "https://i.pinimg.com/736x/82/d5/c5/82d5c596c027c75adf25e299517f7cf5.jpg";
+const GALERIA = [
+  { imagem: FOTO_EXEMPLO4, legenda: "",       formato: "alta" },
+  { imagem: FOTO_EXEMPLO1, legenda: "",             formato: "" },
+  { imagem: FOTO_EXEMPLO2, legenda: "",          formato: "larga" },
+  { imagem: FOTO_EXEMPLO3, legenda: "",     formato: "" },
+
+
+  { imagem: FOTO_EXEMPLO5, legenda: "",         formato: "larga" },
+
+
+
+];
+
+/* SOBRE A LOJA -> texto e foto da seção "sobre" */
+const SOBRE = {
+  titulo: "Quem somos",
+  texto: "Somos uma loja de bairro que acredita em roupa boa, confortável e com preço justo. Conte aqui a história da sua loja.",
+  imagem: FOTO_EXEMPLO6
+};
+
+/* =================================================================
+   DAQUI PARA BAIXO É O FUNCIONAMENTO DO SITE.
+   Só mexa se quiser mudar o comportamento.
+   ================================================================= */
+
+// Carrinho: lista de { id, tamanho, qtd }
+let carrinho = [];
+let filtroAtual = "Todos";
+const POR_PAGINA = 8;            // quantos produtos aparecem de cada vez (mude se quiser)
+let mostrando = POR_PAGINA;
+const tamanhoEscolhido = {};   // guarda o tamanho selecionado em cada produto
+
+// Formata número como dinheiro: 89.9 -> "R$ 89,90"
+const dinheiro = n => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+// Atalho para pegar elementos da página pelo id
+const $ = id => document.getElementById(id);
+
+/* ---------- Textos fixos da loja ---------- */
+function preencherLoja() {
+  document.title = LOJA.nome;
+  $("nome-loja").textContent = LOJA.nome;
+  $("titulo-banner").textContent = LOJA.tituloBanner;
+  $("texto-banner").textContent = LOJA.textoBanner;
+  $("rodape-nome").textContent = LOJA.nome;
+  $("rodape-endereco").textContent = LOJA.endereco;
+  $("rodape-zap").textContent = LOJA.whatsapp;
+  $("rodape-zap").href = "https://wa.me/" + LOJA.whatsapp;
+  $("rodape-insta").textContent = "@" + LOJA.instagram;
+  $("rodape-insta").href = "https://instagram.com/" + LOJA.instagram;
+}
+
+/* ---------- Botões de filtro (Todos, Camisetas, ...) ---------- */
+function desenharFiltros() {
+  const categorias = ["Todos", ...new Set(PRODUTOS.map(p => p.categoria))];
+  $("filtros").innerHTML = categorias.map(c =>
+    `<button class="${c === filtroAtual ? "ativo" : ""}" data-cat="${c}">${c}</button>`
+  ).join("");
+}
+
+/* ---------- Cards dos produtos ---------- */
+function desenharProdutos() {
+  const todos = PRODUTOS.filter(p => filtroAtual === "Todos" || p.categoria === filtroAtual);
+  const lista = todos.slice(0, mostrando);                       // só os primeiros
+  $("ver-mais").style.display = todos.length > mostrando ? "inline-block" : "none";
+
+  $("produtos").innerHTML = lista.map(p => {
+    const fundo = p.imagem ? `background-image:url('${p.imagem}')` : `background:${p.cor}`;
+    const botoesTamanho = p.tamanhos.map(t =>
+      `<button class="${tamanhoEscolhido[p.id] === t ? "ativo" : ""}" data-prod="${p.id}" data-tam="${t}">${t}</button>`
+    ).join("");
+
+    return `
+      <article class="produto">
+        <div class="foto" style="${fundo}">${p.imagem ? "" : p.categoria}</div>
+        <h3>${p.nome}</h3>
+        <div class="preco">${p.precoAntigo ? `<s class="antigo">${dinheiro(p.precoAntigo)}</s> ` : ""}${dinheiro(p.preco)}</div>
+        <div class="tamanhos">${botoesTamanho}</div>
+        <button class="btn" data-add="${p.id}">Adicionar à sacola</button>
+      </article>`;
+  }).join("");
+}
+
+/* ---------- Carrinho ---------- */
+function adicionar(id) {
+  const produto = PRODUTOS.find(p => p.id === id);
+  const tamanho = tamanhoEscolhido[id];
+
+  if (!tamanho) {
+    alert("Escolha um tamanho para " + produto.nome + ".");
+    return;
+  }
+
+  const existente = carrinho.find(i => i.id === id && i.tamanho === tamanho);
+  if (existente) existente.qtd++;
+  else carrinho.push({ id, tamanho, qtd: 1 });
+
+  desenharCarrinho();
+  abrirCarrinho();
+}
+
+function mudarQtd(indice, mudanca) {
+  carrinho[indice].qtd += mudanca;
+  if (carrinho[indice].qtd <= 0) carrinho.splice(indice, 1);
+  desenharCarrinho();
+}
+
+function desenharCarrinho() {
+  let total = 0, quantidade = 0;
+
+  $("itens").innerHTML = carrinho.length === 0
+    ? `<p class="vazio">Sua sacola está vazia. Escolha uma peça e um tamanho.</p>`
+    : carrinho.map((item, i) => {
+        const p = PRODUTOS.find(x => x.id === item.id);
+        total += p.preco * item.qtd;
+        quantidade += item.qtd;
+        return `
+          <div class="item">
+            <div>
+              ${p.nome}<small>Tamanho ${item.tamanho}</small>
+              <div class="qtd">
+                <button data-menos="${i}" aria-label="Diminuir">−</button>
+                <span>${item.qtd}</span>
+                <button data-mais="${i}" aria-label="Aumentar">+</button>
+              </div>
+            </div>
+            <strong>${dinheiro(p.preco * item.qtd)}</strong>
+          </div>`;
+      }).join("");
+
+  $("total").textContent = dinheiro(total);
+  $("contador").textContent = quantidade;
+}
+
+function abrirCarrinho()  { $("carrinho").classList.add("aberto");    $("fundo").classList.add("aberto"); }
+function fecharCarrinho() { $("carrinho").classList.remove("aberto"); $("fundo").classList.remove("aberto"); }
+
+/* ---------- Finalizar: monta a mensagem e abre o WhatsApp ---------- */
+function finalizar() {
+  if (carrinho.length === 0) { alert("Sua sacola está vazia."); return; }
+
+  let total = 0;
+  const linhas = carrinho.map(item => {
+    const p = PRODUTOS.find(x => x.id === item.id);
+    total += p.preco * item.qtd;
+    return `• ${item.qtd}x ${p.nome} (tam. ${item.tamanho}) - ${dinheiro(p.preco * item.qtd)}`;
+  });
+
+  const mensagem = `Olá! Quero fazer um pedido:\n\n${linhas.join("\n")}\n\nTotal: ${dinheiro(total)}`;
+  window.open("https://wa.me/" + LOJA.whatsapp + "?text=" + encodeURIComponent(mensagem), "_blank");
+}
+
+/* ---------- Seções extras ---------- */
+// Cria o estilo de fundo: foto se tiver, senão uma cor
+const fundoDe = (imagem, cor = "#c9d6ff") =>
+  imagem ? `background-image:url('${imagem}')` : `background:${cor}`;
+
+function desenharExtras() {
+  // Benefícios
+  $("beneficios").innerHTML = BENEFICIOS.map(b =>
+    `<div class="beneficio"><strong>${b.titulo}</strong><span>${b.texto}</span></div>`).join("");
+
+  // Categorias: usa a foto do primeiro produto de cada categoria
+  const nomes = [...new Set(PRODUTOS.map(p => p.categoria))];
+  $("cats").innerHTML = nomes.map(c => {
+    const p = PRODUTOS.find(x => x.categoria === c);
+    return `<button class="cat" style="${fundoDe(p.imagem, p.cor)}" data-vercat="${c}"><span>${c}</span></button>`;
+  }).join("");
+
+  // Galeria
+  $("galeria").innerHTML = GALERIA.map((g, i) =>
+    `<button class="${g.formato}" style="${fundoDe(g.imagem, "#d8d2c4")}" data-zoom="${i}"><span>${g.legenda}</span></button>`
+  ).join("");
+
+  // Sobre
+  $("sobre-titulo").textContent = SOBRE.titulo;
+  $("sobre-texto").textContent = SOBRE.texto;
+  $("sobre-foto").style.cssText = fundoDe(SOBRE.imagem) + ";background-size:cover;background-position:center";
+  $("sobre-botao").href = "https://wa.me/" + LOJA.whatsapp;
+}
+
+function abrirZoom(i) {
+  const g = GALERIA[i];
+  if (!g.imagem) return;               // sem foto, não amplia
+  $("zoom-img").src = g.imagem;
+  $("zoom-legenda").textContent = g.legenda;
+  $("zoom").classList.add("aberto");
+}
+
+/* ---------- Cliques (um único "ouvidor" para tudo) ---------- */
+document.addEventListener("click", e => {
+  const el = e.target;
+
+  if (el.dataset.cat)  { filtroAtual = el.dataset.cat; mostrando = POR_PAGINA; desenharFiltros(); desenharProdutos(); }
+  if (el.dataset.tam)  { tamanhoEscolhido[el.dataset.prod] = el.dataset.tam; desenharProdutos(); }
+  if (el.dataset.add)  adicionar(Number(el.dataset.add));
+  if (el.id === "ver-mais") { mostrando += POR_PAGINA; desenharProdutos(); }
+  const cat = el.closest("[data-vercat]");
+  if (cat) { filtroAtual = cat.dataset.vercat; mostrando = POR_PAGINA; desenharFiltros(); desenharProdutos(); $("filtros").scrollIntoView(); }
+  const foto = el.closest("[data-zoom]");
+  if (foto) abrirZoom(Number(foto.dataset.zoom));
+  if (el.id === "zoom" || el.closest("#zoom")) $("zoom").classList.remove("aberto");
+  if (el.dataset.mais)  mudarQtd(Number(el.dataset.mais), +1);
+  if (el.dataset.menos) mudarQtd(Number(el.dataset.menos), -1);
+});
+
+$("abrir-carrinho").onclick = abrirCarrinho;
+$("fechar-carrinho").onclick = fecharCarrinho;
+$("fundo").onclick = fecharCarrinho;
+$("finalizar").onclick = finalizar;
+
+/* ---------- Início ---------- */
+preencherLoja();
+desenharFiltros();
+desenharProdutos();
+desenharCarrinho();
+desenharExtras();
+</script>
+</body>
+</html>
